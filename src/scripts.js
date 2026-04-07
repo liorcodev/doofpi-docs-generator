@@ -1,0 +1,784 @@
+// Mobile menu toggle
+const mobileMenuToggle = document.getElementById("mobileMenuToggle");
+const sidebar = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebarOverlay");
+
+function toggleSidebar() {
+  // Only toggle if on mobile
+  if (window.innerWidth <= 1200) {
+    sidebar.classList.toggle("active");
+    sidebarOverlay.classList.toggle("active");
+    document.body.style.overflow = sidebar.classList.contains("active")
+      ? "hidden"
+      : "";
+  }
+}
+
+mobileMenuToggle?.addEventListener("click", toggleSidebar);
+sidebarOverlay?.addEventListener("click", toggleSidebar);
+
+// Close sidebar on resize to desktop
+window.addEventListener("resize", () => {
+  if (window.innerWidth > 1200) {
+    sidebar.classList.remove("active");
+    sidebarOverlay.classList.remove("active");
+    document.body.style.overflow = "";
+  }
+});
+
+// Route card expansion
+document.querySelectorAll(".route-header")?.forEach((header) => {
+  header.addEventListener("click", () => {
+    const card = header.closest(".route-card");
+    const body = card.querySelector(".route-body");
+    const isExpanded = card.classList.contains("expanded");
+
+    if (isExpanded) {
+      // Snap max-height to actual height first so collapse starts immediately
+      body.style.maxHeight = body.scrollHeight + "px";
+      requestAnimationFrame(() => {
+        body.style.maxHeight = "0";
+      });
+      card.classList.remove("expanded");
+    } else {
+      card.classList.add("expanded");
+      body.style.maxHeight = body.scrollHeight + "px";
+      body.addEventListener(
+        "transitionend",
+        () => {
+          // Allow free resize (e.g. nested textareas) once fully open
+          if (card.classList.contains("expanded")) {
+            body.style.maxHeight = "none";
+          }
+        },
+        { once: true },
+      );
+    }
+  });
+});
+
+// Smooth scroll for sidebar links
+document.querySelectorAll(".sidebar-link").forEach((link) => {
+  link.addEventListener("click", (e) => {
+    e.preventDefault();
+
+    // Set active immediately on click
+    document
+      .querySelectorAll(".sidebar-link")
+      .forEach((l) => l.classList.remove("active"));
+    link.classList.add("active");
+
+    const target = document.querySelector(link.getAttribute("href"));
+    if (target) {
+      // Calculate total sticky header height
+      const mobileTopbar = document.querySelector(".mobile-topbar");
+      const stickyBar = document.querySelector(".search-filter-bar");
+
+      let stickyOffset = 0;
+
+      // Add mobile topbar height if visible
+      if (
+        mobileTopbar &&
+        window.getComputedStyle(mobileTopbar).display !== "none"
+      ) {
+        stickyOffset += mobileTopbar.offsetHeight;
+      }
+
+      // Add search filter bar height
+      if (stickyBar) {
+        stickyOffset += stickyBar.offsetHeight;
+      }
+
+      // Add small buffer for better positioning
+      const offset = stickyOffset + 12;
+      const top = target.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: "smooth" });
+
+      // Close sidebar on mobile after clicking a link
+      if (window.innerWidth <= 1200 && sidebar.classList.contains("active")) {
+        toggleSidebar();
+      }
+    }
+  });
+});
+
+// Scroll spy - highlight active section
+function updateActiveSection() {
+  // Calculate total sticky header height
+  const mobileTopbar = document.querySelector(".mobile-topbar");
+  const stickyBar = document.querySelector(".search-filter-bar");
+
+  let stickyOffset = 0;
+
+  // Add mobile topbar height if visible
+  if (
+    mobileTopbar &&
+    window.getComputedStyle(mobileTopbar).display !== "none"
+  ) {
+    stickyOffset += mobileTopbar.offsetHeight;
+  }
+
+  // Add search filter bar height
+  if (stickyBar) {
+    stickyOffset += stickyBar.offsetHeight;
+  }
+
+  // Add a small buffer to trigger slightly before hiding under sticky header
+  const scrollPos = window.scrollY + stickyOffset + 20;
+
+  const sections = Array.from(document.querySelectorAll(".route-card")).filter(
+    (card) => document.querySelector(`.sidebar-link[href="#${card.id}"]`),
+  );
+
+  if (sections.length === 0) return;
+
+  // Find the current section - the last one whose top has passed the scroll position
+  let current = sections[0];
+  for (const section of sections) {
+    if (section.offsetTop <= scrollPos) {
+      current = section;
+    } else {
+      break;
+    }
+  }
+
+  // Update active link
+  const activeLink = document.querySelector(
+    `.sidebar-link[href="#${current.id}"]`,
+  );
+  const currentActive = document.querySelector(".sidebar-link.active");
+
+  if (activeLink && activeLink !== currentActive) {
+    document
+      .querySelectorAll(".sidebar-link")
+      .forEach((l) => l.classList.remove("active"));
+    activeLink.classList.add("active");
+  }
+}
+
+// Debounce scroll events
+let scrollTimeout;
+window.addEventListener(
+  "scroll",
+  () => {
+    if (scrollTimeout) {
+      window.cancelAnimationFrame(scrollTimeout);
+    }
+    scrollTimeout = window.requestAnimationFrame(updateActiveSection);
+  },
+  { passive: true },
+);
+
+// Set initial active state
+window.addEventListener("load", () => {
+  updateActiveSection();
+});
+
+// Configuration modal functions
+function updateConfigButton() {
+  const baseUrl = localStorage.getItem("doofpi-base-url");
+  const configButton = document.getElementById("configButton");
+  const configButtonText = document.getElementById("configButtonText");
+  const mobileConfigButton = document.getElementById("mobileConfigButton");
+
+  if (baseUrl) {
+    configButton.classList.add("configured");
+    configButtonText.textContent = "Change Base URL";
+    mobileConfigButton?.classList.add("configured");
+  } else {
+    configButton.classList.remove("configured");
+    configButtonText.textContent = "Configure Base URL";
+    mobileConfigButton?.classList.remove("configured");
+  }
+}
+
+function openConfigModal() {
+  const modal = document.getElementById("configModal");
+  const input = document.getElementById("baseUrlInput");
+
+  input.value = localStorage.getItem("doofpi-base-url") || "";
+  modal.classList.add("active");
+  setTimeout(() => input.focus(), 100);
+}
+
+function closeConfigModal() {
+  const modal = document.getElementById("configModal");
+  modal.classList.remove("active");
+}
+
+function saveBaseUrl() {
+  const input = document.getElementById("baseUrlInput");
+  const baseUrl = input.value.trim();
+
+  if (!baseUrl) {
+    alert("Please enter a base URL");
+    return;
+  }
+
+  try {
+    new URL(baseUrl);
+  } catch (e) {
+    alert("Please enter a valid URL (including http:// or https://)");
+    return;
+  }
+
+  localStorage.setItem("doofpi-base-url", baseUrl);
+  updateConfigButton();
+  closeConfigModal();
+}
+
+// Close modal on ESC key
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") {
+    closeConfigModal();
+  }
+});
+
+// Close modal on backdrop click
+document.getElementById("configModal")?.addEventListener("click", (e) => {
+  if (e.target.id === "configModal") {
+    closeConfigModal();
+  }
+});
+
+// Initialize config button state
+updateConfigButton();
+
+// Header management functions
+function addHeader(routeId) {
+  const container = document.getElementById("headers-" + routeId);
+  const headerRow = document.createElement("div");
+  headerRow.className = "header-row";
+  headerRow.innerHTML = `
+    <input type="text" class="header-input" placeholder="Header name" data-type="key">
+    <input type="text" class="header-input" placeholder="Header value" data-type="value">
+    <button class="btn-icon" onclick="removeHeader(this)" title="Remove header">
+      <span class="iconify" data-icon="mdi:close" style="width: 16px; height: 16px;"></span>
+    </button>
+  `;
+  container.appendChild(headerRow);
+}
+
+function removeHeader(button) {
+  const headerRow = button.closest(".header-row");
+  const container = headerRow.parentElement;
+  if (container.children.length > 1) {
+    headerRow.remove();
+  } else {
+    // Clear the inputs instead of removing if it's the last one
+    headerRow
+      .querySelectorAll(".header-input")
+      .forEach((input) => (input.value = ""));
+  }
+}
+
+function getHeaders(routeId) {
+  const container = document.getElementById("headers-" + routeId);
+  const headers = {};
+  container.querySelectorAll(".header-row").forEach((row) => {
+    const key = row.querySelector('[data-type="key"]').value.trim();
+    const value = row.querySelector('[data-type="value"]').value.trim();
+    if (key && value) {
+      headers[key] = value;
+    }
+  });
+  return headers;
+}
+
+function saveHeaders(routeId) {
+  const headers = getHeaders(routeId);
+  localStorage.setItem("doofpi-docs-headers", JSON.stringify(headers));
+
+  const saveBtn = document.getElementById("save-btn-" + routeId);
+  saveBtn.classList.add("saved");
+  saveBtn.innerHTML = `
+    <span class="iconify" data-icon="mdi:check" style="width: 14px; height: 14px;"></span>
+    Saved!
+  `;
+
+  setTimeout(() => {
+    saveBtn.classList.remove("saved");
+    saveBtn.innerHTML = `
+      <span class="iconify" data-icon="mdi:content-save" style="width: 14px; height: 14px;"></span>
+      Save Headers
+    `;
+  }, 2000);
+}
+
+function loadHeaders(routeId) {
+  const saved = localStorage.getItem("doofpi-docs-headers");
+  if (!saved) {
+    alert("No saved headers found");
+    return;
+  }
+
+  const headers = JSON.parse(saved);
+  const container = document.getElementById("headers-" + routeId);
+
+  // Clear existing headers
+  container.innerHTML = "";
+
+  // Add saved headers
+  Object.entries(headers).forEach(([key, value]) => {
+    const headerRow = document.createElement("div");
+    headerRow.className = "header-row";
+    headerRow.innerHTML = `
+      <input type="text" class="header-input" placeholder="Header name" data-type="key" value="${escapeHtml(key)}">
+      <input type="text" class="header-input" placeholder="Header value" data-type="value" value="${escapeHtml(value)}">
+      <button class="btn-icon" onclick="removeHeader(this)" title="Remove header">
+        <span class="iconify" data-icon="mdi:close" style="width: 16px; height: 16px;"></span>
+      </button>
+    `;
+    container.appendChild(headerRow);
+  });
+
+  // Add one empty row if no headers loaded
+  if (container.children.length === 0) {
+    addHeader(routeId);
+  }
+}
+
+// Endpoint testing function
+// doofpi URL structure: baseUrl (includes root, e.g. http://localhost:3000/doofpi) + "." + path
+// e.g. http://localhost:3000/doofpi.users.list
+// read  → GET  with ?input=<encoded JSON>
+// write → POST with JSON body
+async function testEndpoint(routeId, path, type) {
+  const responseContainer = document.getElementById("response-" + routeId);
+  const testBtn = document.getElementById("test-btn-" + routeId);
+  const inputField = document.getElementById("input-" + routeId);
+
+  // Get headers
+  const headers = getHeaders(routeId);
+  headers["Content-Type"] = "application/json";
+
+  // Get input data
+  let inputData = null;
+  if (inputField) {
+    try {
+      const inputText = inputField.value.trim();
+      if (inputText) {
+        inputData = JSON.parse(inputText);
+      }
+    } catch (e) {
+      responseContainer.innerHTML = `
+        <div class="response-status error">
+          <span class="iconify" data-icon="mdi:alert-circle" style="width: 16px; height: 16px;"></span>
+          Invalid JSON Syntax
+        </div>
+        <div class="response-block">
+          <pre>${escapeHtml(e.message)}
+
+💡 Tip: Make sure to use proper JSON format with double quotes around both keys and string values.</pre>
+        </div>
+      `;
+      responseContainer.style.display = "block";
+      return;
+    }
+  }
+
+  // Show loading state
+  testBtn.disabled = true;
+  testBtn.innerHTML = `
+    <span class="loading-spinner"></span>
+    Sending...
+  `;
+  responseContainer.style.display = "none";
+
+  try {
+    const baseUrl = localStorage.getItem("doofpi-base-url");
+
+    if (!baseUrl) {
+      openConfigModal();
+      testBtn.disabled = false;
+      testBtn.innerHTML = `
+        <span class="iconify" data-icon="mdi:send" style="width: 18px; height: 18px;"></span>
+        Send Request
+      `;
+      return;
+    }
+
+    // Use GET for reads, POST for writes
+    const method = type === "read" ? "GET" : "POST";
+    // doofpi uses dot-separated paths: baseUrl + "." + path
+    let url = `${baseUrl}.${path}`;
+
+    const fetchOptions = {
+      method: method,
+      headers: headers,
+    };
+
+    if (method === "GET" && inputData) {
+      const params = new URLSearchParams({ input: JSON.stringify(inputData) });
+      url = `${url}?${params}`;
+    } else if (method === "POST") {
+      fetchOptions.body = JSON.stringify(inputData);
+    }
+
+    const response = await fetch(url, fetchOptions);
+
+    let data;
+    const contentType = response.headers.get("content-type");
+    if (contentType && contentType.includes("application/json")) {
+      data = await response.json();
+    } else {
+      const text = await response.text();
+      data = { message: text || "No response body" };
+    }
+
+    const isSuccess = response.ok;
+
+    // Build debug info
+    const debugInfo = `Request Details:
+URL: ${url}
+Method: ${method}
+Headers: ${JSON.stringify(headers, null, 2)}
+Body: ${method === "POST" ? JSON.stringify(inputData, null, 2) : "N/A (sent as query param)"}
+
+---
+`;
+
+    responseContainer.innerHTML = `
+      <div class="response-status ${isSuccess ? "success" : "error"}">
+        <span class="iconify" data-icon="mdi:${isSuccess ? "check-circle" : "alert-circle"}" style="width: 16px; height: 16px;"></span>
+        ${isSuccess ? "Success" : "Error"} (${response.status} ${response.statusText})
+      </div>
+      <div class="response-block">
+        <pre>${!isSuccess ? debugInfo : ""}${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+      </div>
+    `;
+    responseContainer.style.display = "block";
+  } catch (error) {
+    responseContainer.innerHTML = `
+      <div class="response-status error">
+        <span class="iconify" data-icon="mdi:alert-circle" style="width: 16px; height: 16px;"></span>
+        Request Failed
+      </div>
+      <div class="response-block">
+        <pre>${escapeHtml(error.message)}</pre>
+      </div>
+    `;
+    responseContainer.style.display = "block";
+  } finally {
+    // Reset button
+    testBtn.disabled = false;
+    testBtn.innerHTML = `
+      <span class="iconify" data-icon="mdi:send" style="width: 18px; height: 18px;"></span>
+      Send Request
+    `;
+  }
+}
+
+// Make functions global
+window.addHeader = addHeader;
+window.removeHeader = removeHeader;
+window.saveHeaders = saveHeaders;
+window.loadHeaders = loadHeaders;
+window.testEndpoint = testEndpoint;
+window.escapeHtml = function (str) {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+};
+
+// Make config modal functions global
+window.openConfigModal = openConfigModal;
+window.closeConfigModal = closeConfigModal;
+window.saveBaseUrl = saveBaseUrl;
+
+// Add optional field to JSON input
+window.addOptionalField = function (
+  routeId,
+  fieldName,
+  fieldExample,
+  badgeElement,
+) {
+  const inputField = document.getElementById("input-" + routeId);
+  if (!inputField) return;
+
+  try {
+    const currentValue = inputField.value.trim();
+    if (!currentValue) {
+      // If empty, create new object with just this field
+      inputField.value = `{\n  "${fieldName}": ${fieldExample}\n}`;
+      // Hide the badge
+      if (badgeElement) {
+        badgeElement.style.display = "none";
+      }
+      return;
+    }
+
+    // Parse current JSON
+    const jsonObj = JSON.parse(currentValue);
+
+    // Add the field if it doesn't exist
+    if (!(fieldName in jsonObj)) {
+      jsonObj[fieldName] = JSON.parse(fieldExample);
+
+      // Stringify back with formatting
+      inputField.value = JSON.stringify(jsonObj, null, 2);
+
+      // Hide the badge
+      if (badgeElement) {
+        badgeElement.style.display = "none";
+      }
+    }
+  } catch (e) {
+    console.error("Error adding optional field:", e);
+    alert("Could not add field. Please ensure the JSON is valid.");
+  }
+};
+
+// Search and filter functionality
+function performSearch() {
+  const searchInput = document.getElementById("searchInput");
+  const typeFilter = document.getElementById("typeFilter");
+  const authFilter = document.getElementById("authFilter");
+  const tagFilter = document.getElementById("tagFilter");
+  const resultsCount = document.getElementById("resultsCount");
+
+  if (
+    !searchInput ||
+    !typeFilter ||
+    !authFilter ||
+    !tagFilter ||
+    !resultsCount
+  ) {
+    return;
+  }
+
+  const searchTerm = searchInput.value.toLowerCase().trim();
+  const selectedType = typeFilter.value;
+  const selectedAuth = authFilter.value;
+  const selectedTag = tagFilter.value;
+
+  // Save filters to localStorage
+  localStorage.setItem(
+    "doofpi-docs-filters",
+    JSON.stringify({
+      search: searchTerm,
+      type: selectedType,
+      auth: selectedAuth,
+      tag: selectedTag,
+    }),
+  );
+
+  // Update filter badge and clear button
+  updateFilterBadge();
+
+  let visibleCount = 0;
+  const totalCount = document.querySelectorAll(".route-card").length;
+
+  // Filter route cards
+  document.querySelectorAll(".route-card").forEach((card) => {
+    const cardType = card.getAttribute("data-type");
+    const cardAuth = card.getAttribute("data-auth") === "true";
+    const cardTags = card.getAttribute("data-tags") || "";
+    const cardSearch = card.getAttribute("data-search") || "";
+
+    // Apply filters
+    const matchesSearch = !searchTerm || cardSearch.includes(searchTerm);
+    const matchesType = selectedType === "all" || cardType === selectedType;
+    const matchesAuth =
+      selectedAuth === "all" ||
+      (selectedAuth === "public" && !cardAuth) ||
+      (selectedAuth === "protected" && cardAuth);
+    const matchesTag =
+      selectedTag === "all" || cardTags.split(",").includes(selectedTag);
+
+    const isVisible = matchesSearch && matchesType && matchesAuth && matchesTag;
+
+    // Show/hide card
+    card.style.display = isVisible ? "block" : "none";
+
+    // Update sidebar link visibility
+    const cardId = card.id;
+    const sidebarLink = document.querySelector(
+      `.sidebar-link[href="#${cardId}"]`,
+    );
+    if (sidebarLink) {
+      sidebarLink.style.display = isVisible ? "block" : "none";
+    }
+
+    if (isVisible) visibleCount++;
+  });
+
+  // Hide empty route groups
+  document.querySelectorAll(".route-group").forEach((group) => {
+    const visibleCards = Array.from(
+      group.querySelectorAll(".route-card"),
+    ).filter((card) => card.style.display !== "none");
+    group.style.display = visibleCards.length > 0 ? "block" : "none";
+  });
+
+  // Hide empty sidebar groups
+  document.querySelectorAll(".sidebar-group").forEach((group) => {
+    const visibleLinks = Array.from(
+      group.querySelectorAll(".sidebar-link"),
+    ).filter((link) => link.style.display !== "none");
+    group.style.display = visibleLinks.length > 0 ? "block" : "none";
+  });
+
+  // Update results counter
+  resultsCount.textContent = `Showing ${visibleCount} of ${totalCount} endpoints`;
+}
+
+// Update filter badge visibility
+function updateFilterBadge() {
+  const searchInput = document.getElementById("searchInput");
+  const typeFilter = document.getElementById("typeFilter");
+  const authFilter = document.getElementById("authFilter");
+  const tagFilter = document.getElementById("tagFilter");
+  const clearBtn = document.getElementById("clearFiltersBtn");
+
+  if (!searchInput || !typeFilter || !authFilter || !tagFilter || !clearBtn) {
+    return;
+  }
+
+  const searchActive = searchInput.value.trim() !== "";
+  const typeActive = typeFilter.value !== "all";
+  const authActive = authFilter.value !== "all";
+  const tagActive = tagFilter.value !== "all";
+
+  const hasActiveFilters =
+    searchActive || typeActive || authActive || tagActive;
+
+  clearBtn.disabled = !hasActiveFilters;
+
+  if (hasActiveFilters) {
+    clearBtn.classList.add("active");
+  } else {
+    clearBtn.classList.remove("active");
+  }
+
+  if (searchActive) {
+    searchInput.classList.add("filter-active");
+  } else {
+    searchInput.classList.remove("filter-active");
+  }
+
+  if (typeActive) {
+    typeFilter.classList.add("filter-active");
+  } else {
+    typeFilter.classList.remove("filter-active");
+  }
+
+  if (authActive) {
+    authFilter.classList.add("filter-active");
+  } else {
+    authFilter.classList.remove("filter-active");
+  }
+
+  if (tagActive) {
+    tagFilter.classList.add("filter-active");
+  } else {
+    tagFilter.classList.remove("filter-active");
+  }
+}
+
+// Clear all filters
+function clearFilters() {
+  const searchInput = document.getElementById("searchInput");
+  const typeFilter = document.getElementById("typeFilter");
+  const authFilter = document.getElementById("authFilter");
+  const tagFilter = document.getElementById("tagFilter");
+
+  if (searchInput) searchInput.value = "";
+  if (typeFilter) typeFilter.value = "all";
+  if (authFilter) authFilter.value = "all";
+  if (tagFilter) tagFilter.value = "all";
+
+  performSearch();
+}
+
+// Load saved filters from localStorage
+function loadSavedFilters() {
+  const saved = localStorage.getItem("doofpi-docs-filters");
+  if (!saved) return;
+
+  try {
+    const filters = JSON.parse(saved);
+    const searchInput = document.getElementById("searchInput");
+    const typeFilter = document.getElementById("typeFilter");
+    const authFilter = document.getElementById("authFilter");
+    const tagFilter = document.getElementById("tagFilter");
+
+    if (searchInput && filters.search) searchInput.value = filters.search;
+    if (typeFilter && filters.type) typeFilter.value = filters.type;
+    if (authFilter && filters.auth) authFilter.value = filters.auth;
+    if (tagFilter && filters.tag) tagFilter.value = filters.tag;
+
+    // Apply filters after loading
+    performSearch();
+  } catch (e) {
+    console.error("Error loading saved filters:", e);
+  }
+}
+
+// Debounce function for search input
+function debounce(func, wait) {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+}
+
+// Attach event listeners for search and filters
+const debouncedSearch = debounce(performSearch, 300);
+
+document
+  .getElementById("searchInput")
+  ?.addEventListener("input", debouncedSearch);
+document
+  .getElementById("typeFilter")
+  ?.addEventListener("change", performSearch);
+document
+  .getElementById("authFilter")
+  ?.addEventListener("change", performSearch);
+document.getElementById("tagFilter")?.addEventListener("change", performSearch);
+
+// Load saved filters on page load
+loadSavedFilters();
+
+// Make clearFilters globally accessible
+window.clearFilters = clearFilters;
+
+// ── Scroll to top button visibility ──────────────────────────
+(function () {
+  const btn = document.getElementById("scrollTopBtn");
+  if (!btn) return;
+  window.addEventListener(
+    "scroll",
+    () => {
+      btn.classList.toggle("visible", window.scrollY > 300);
+    },
+    { passive: true },
+  );
+})();
+
+// ── Copy schema button ─────────────────────────────────────────
+window.copySchema = function (btn) {
+  const pre = btn.closest(".schema-block").querySelector("pre");
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent || "").then(
+    () => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("copied");
+      }, 2000);
+    },
+    () => {
+      btn.textContent = "Failed";
+      setTimeout(() => {
+        btn.textContent = "Copy";
+      }, 2000);
+    },
+  );
+};

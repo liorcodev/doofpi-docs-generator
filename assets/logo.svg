@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="512" x2="512" y2="0" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#2e83bb"/>
+      <stop offset="100%" stop-color="#4da7d8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+
+  <!-- Text: "dD" in white -->
+  <text x="256" y="370" font-family="Arial, sans-serif" font-size="320" font-weight="bold" fill="white" text-anchor="middle">
+    <tspan>d</tspan><tspan font-size="340">D</tspan>
+  </text>
+</svg>

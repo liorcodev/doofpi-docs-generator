@@ -1,0 +1,56 @@
+{
+  "name": "doofpi-docs-generator",
+  "version": "0.1.0",
+  "author": "Lior Cohen",
+  "homepage": "https://github.com/liorcodev/doofpi-docs-generator#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liorcodev/doofpi-docs-generator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/liorcodev/doofpi-docs-generator/issues"
+  },
+  "license": "MIT",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "devDependencies": {
+    "@types/bun": "^1.3.11",
+    "@types/node": "^25.5.2",
+    "doofpi": "^1.0.0",
+    "prettier": "^3.8.1",
+    "sharp": "^0.34.5",
+    "typescript": "^5.9.3",
+    "zod": "^4.3.6"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "description": "Generate beautiful, fully interactive doofpi API documentation with a built-in testing playground. Test endpoints directly in the browser, manage headers, auto-fill requests, and see live responses - all with zero configuration.",
+  "files": [
+    "dist",
+    "assets",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "doofpi",
+    "documentation",
+    "api",
+    "docs",
+    "generator",
+    "typescript",
+    "zod"
+  ],
+  "scripts": {
+    "format": "prettier --write .",
+    "generate": "bun scripts/generate-preview.ts",
+    "prebuild": "bun scripts/build-inline.js",
+    "build": "tsc",
+    "prepublishOnly": "bun run build"
+  },
+  "type": "module",
+  "types": "./dist/index.d.ts"
+}
