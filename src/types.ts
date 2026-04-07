@@ -3,10 +3,10 @@
  * Use with d.defineMeta<RouteMeta>()
  */
 export type RouteMeta = {
-  /** Human-readable name for the route */
-  name?: string;
   /** Documentation metadata */
   docs?: {
+    /** Human-readable title for the route */
+    title?: string;
     /** Description of what the route does */
     description?: string;
     /** Tags for grouping routes */

@@ -10,8 +10,12 @@ const d = new Doofpi().defineMeta<RouteMeta>();
 const routes = d.routes({
   readEndpoint: d.endpointBuilder
     .meta({
-      name: "Get Item",
-      docs: { description: "Fetches an item", tags: ["items"], auth: true },
+      docs: {
+        title: "Get Item",
+        description: "Fetches an item",
+        tags: ["items"],
+        auth: true,
+      },
     })
     .model({ input: z.object({ id: z.string() }) })
     .read(() => ""),
@@ -32,7 +36,7 @@ describe("route metadata", () => {
 
   test("meta fields are extracted correctly", () => {
     const route = getRoute(collectRoutes(routes), "readEndpoint");
-    expect(route.meta?.name).toBe("Get Item");
+    expect(route.meta?.docs?.title).toBe("Get Item");
     expect(route.meta?.docs?.description).toBe("Fetches an item");
     expect(route.meta?.docs?.tags).toEqual(["items"]);
     expect(route.meta?.docs?.auth).toBe(true);

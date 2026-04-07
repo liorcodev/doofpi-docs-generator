@@ -99,7 +99,7 @@ export function generateDocsHtml(
                 (route) => `
               <a href="#${route.path.replace(/\./g, "-")}-${route.type}" class="sidebar-link">
                 <span class="link-type-dot dot-${route.type}"></span>
-                ${route.meta?.name ?? route.path.split(".").pop()} <span style="opacity:0.5;font-size:0.7em">${route.type}</span>
+                ${route.meta?.docs?.title ?? route.path.split(".").pop()} <span style="opacity:0.5;font-size:0.7em">${route.type}</span>
               </a>
             `,
               )
@@ -265,7 +265,7 @@ function generateRouteCard(route: RouteInfo): string {
   const searchableText = [
     route.path,
     route.type,
-    route.meta?.name || "",
+    route.meta?.docs?.title || "",
     docs?.description || "",
     ...(docs?.tags || []),
   ]
@@ -282,7 +282,7 @@ function generateRouteCard(route: RouteInfo): string {
       <div class="route-header">
         <span class="method-badge method-${route.type}">${route.type}</span>
         <div class="route-path-info">
-          ${route.meta?.name ? `<span class="route-name">${route.meta.name}</span>` : ""}
+          ${route.meta?.docs?.title ? `<span class="route-name">${route.meta.docs.title}</span>` : ""}
           <span class="route-path">${route.path}</span>
         </div>
         <div class="route-tags">
