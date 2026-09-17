@@ -260,6 +260,17 @@ function generateJSONExample(
 }
 
 /**
+ * Format a Zod `.describe()` string as an inline `//` comment for TypeScript
+ * output, e.g. for use after an object property's type. Returns '' when there
+ * is no usable description.
+ */
+function describeComment(description: unknown): string {
+  if (typeof description !== "string") return "";
+  const trimmed = description.trim().replace(/\s+/g, " ");
+  return trimmed ? `  // ${trimmed}` : "";
+}
+
+/**
  * Generate TypeScript type definition from a parsed schema object
  */
 function generateTypeScriptExample(schema: any, depth: number = 0): string {
@@ -310,7 +321,8 @@ function generateTypeScriptExample(schema: any, depth: number = 0): string {
           depth + 1,
         );
         const optionalMark = isRequired ? "" : "?";
-        props.push(`${nextIndent}${key}${optionalMark}: ${propType}`);
+        const comment = describeComment((propSchema as any)?.description);
+        props.push(`${nextIndent}${key}${optionalMark}: ${propType}${comment}`);
       }
 
       const objectType = `{\n${props.join("\n")}\n${indent}}`;
@@ -371,7 +383,8 @@ function generateTypeScriptExample(schema: any, depth: number = 0): string {
           depth + 1,
         );
         const optionalMark = isRequired ? "" : "?";
-        props.push(`${nextIndent}${key}${optionalMark}: ${propType}`);
+        const comment = describeComment((propSchema as any)?.description);
+        props.push(`${nextIndent}${key}${optionalMark}: ${propType}${comment}`);
       }
 
       return `{\n${props.join("\n")}\n${indent}}`;

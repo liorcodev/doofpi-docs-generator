@@ -1,6 +1,6 @@
 {
   "name": "doofpi-docs-generator",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Lior Cohen",
   "homepage": "https://github.com/liorcodev/doofpi-docs-generator#readme",
   "repository": {
@@ -14,13 +14,13 @@
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "devDependencies": {
-    "@types/bun": "^1.3.11",
-    "@types/node": "^25.5.2",
+    "@types/bun": "^1.4.2",
+    "@types/node": "^25.9.7",
     "doofpi": "^1.0.0",
-    "prettier": "^3.8.1",
+    "prettier": "^3.9.7",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3",
-    "zod": "^4.3.6"
+    "zod": "^4.6.5"
   },
   "exports": {
     ".": {
@@ -49,6 +49,7 @@
     "generate": "bun scripts/generate-preview.ts",
     "prebuild": "bun scripts/build-inline.js",
     "build": "tsc",
+    "test:esm": "node test-esm.mjs",
     "prepublishOnly": "bun run build"
   },
   "type": "module",
