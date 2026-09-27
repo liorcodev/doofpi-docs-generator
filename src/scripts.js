@@ -264,7 +264,9 @@ function updateSnippetBaseUrls() {
       if (pre.dataset.originalText === undefined) {
         pre.dataset.originalText = pre.textContent;
       }
-      pre.textContent = pre.dataset.originalText.split("{{BASE_URL}}").join(baseUrl);
+      pre.textContent = pre.dataset.originalText
+        .split("{{BASE_URL}}")
+        .join(baseUrl);
     });
 }
 
@@ -456,16 +458,21 @@ function positionHistoryDropdown(dropdown, btn) {
   dropdown.style.position = "fixed";
   dropdown.style.left = Math.max(8, left) + "px";
 
-  if (spaceBelow >= Math.min(160, preferredMaxHeight) || spaceBelow >= spaceAbove) {
+  if (
+    spaceBelow >= Math.min(160, preferredMaxHeight) ||
+    spaceBelow >= spaceAbove
+  ) {
     // Open downward, capped to whatever room is actually available.
     dropdown.style.top = rect.bottom + 6 + "px";
     dropdown.style.bottom = "";
-    dropdown.style.maxHeight = Math.max(120, Math.min(preferredMaxHeight, spaceBelow)) + "px";
+    dropdown.style.maxHeight =
+      Math.max(120, Math.min(preferredMaxHeight, spaceBelow)) + "px";
   } else {
     // Not enough room below — open upward instead.
     dropdown.style.top = "";
     dropdown.style.bottom = window.innerHeight - rect.top + 6 + "px";
-    dropdown.style.maxHeight = Math.max(120, Math.min(preferredMaxHeight, spaceAbove)) + "px";
+    dropdown.style.maxHeight =
+      Math.max(120, Math.min(preferredMaxHeight, spaceAbove)) + "px";
   }
 }
 
@@ -530,7 +537,12 @@ document.addEventListener("click", (e) => {
 window.addEventListener(
   "scroll",
   (e) => {
-    if (e.target && e.target.nodeType === 1 && e.target.closest(".history-dropdown")) return;
+    if (
+      e.target &&
+      e.target.nodeType === 1 &&
+      e.target.closest(".history-dropdown")
+    )
+      return;
     document.querySelectorAll(".history-dropdown").forEach((el) => {
       el.style.display = "none";
     });
@@ -599,7 +611,9 @@ function validateAgainstSchema(data, schema, path) {
 
   if (!schema.type) return [];
 
-  const expectedTypes = Array.isArray(schema.type) ? schema.type : [schema.type];
+  const expectedTypes = Array.isArray(schema.type)
+    ? schema.type
+    : [schema.type];
   const actualType = schemaTypeOf(data);
   const actualTypeAliases =
     actualType === "number" && Number.isInteger(data)
@@ -607,7 +621,13 @@ function validateAgainstSchema(data, schema, path) {
       : [actualType];
 
   if (!expectedTypes.some((t) => actualTypeAliases.includes(t))) {
-    return [path + ": expected type " + expectedTypes.join(" | ") + ", got " + actualType];
+    return [
+      path +
+        ": expected type " +
+        expectedTypes.join(" | ") +
+        ", got " +
+        actualType,
+    ];
   }
 
   let issues = [];
@@ -622,14 +642,22 @@ function validateAgainstSchema(data, schema, path) {
       Object.keys(schema.properties).forEach((key) => {
         if (key in data) {
           issues = issues.concat(
-            validateAgainstSchema(data[key], schema.properties[key], path + "." + key),
+            validateAgainstSchema(
+              data[key],
+              schema.properties[key],
+              path + "." + key,
+            ),
           );
         }
       });
     }
   }
 
-  if (expectedTypes.includes("array") && actualType === "array" && schema.items) {
+  if (
+    expectedTypes.includes("array") &&
+    actualType === "array" &&
+    schema.items
+  ) {
     data.forEach((item, index) => {
       issues = issues.concat(
         validateAgainstSchema(item, schema.items, path + "[" + index + "]"),

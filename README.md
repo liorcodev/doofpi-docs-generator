@@ -63,7 +63,11 @@ const doofpi = d.defineMeta<RouteMeta>();
 export const routes = {
   getUser: doofpi({
     meta: {
-      docs: { title: "Get User", description: "Retrieve a user by ID", tags: ["Users"] },
+      docs: {
+        title: "Get User",
+        description: "Retrieve a user by ID",
+        tags: ["Users"],
+      },
     },
     model: {
       input: z.object({ userId: z.string() }),

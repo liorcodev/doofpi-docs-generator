@@ -15,9 +15,9 @@
   "module": "./dist/index.js",
   "devDependencies": {
     "@types/bun": "^1.4.2",
-    "@types/node": "^25.9.7",
-    "doofpi": "^1.0.0",
-    "prettier": "^3.9.7",
+    "@types/node": "^25.9.8",
+    "doofpi": "^1.1.0",
+    "prettier": "^3.9.9",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "zod": "^4.6.5"

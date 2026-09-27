@@ -96,7 +96,11 @@ export function validateAgainstSchema(
     }
   }
 
-  if (expectedTypes.includes("array") && actualType === "array" && schema.items) {
+  if (
+    expectedTypes.includes("array") &&
+    actualType === "array" &&
+    schema.items
+  ) {
     (data as unknown[]).forEach((item, index) => {
       issues.push(
         ...validateAgainstSchema(item, schema.items, `${path}[${index}]`),
